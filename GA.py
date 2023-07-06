@@ -46,6 +46,7 @@ class GAScheduler:
             new_A = relativeSortArray(A, B, cutpoint)
             new_A[0][cutpoint:] = np.roll(new_A[0][cutpoint:], 1)
             new_A[1][cutpoint:] = np.roll(new_A[1][cutpoint:], 1)
+            new_A[1][-1] = np.random.randint(1, self.num_mc + 1)
             return new_A
         
         parent_list = copy.deepcopy(population_list)
@@ -142,6 +143,7 @@ class GAScheduler:
         # initialize population (random generation)
         print(colored("[scheduler]", "blue"), "initializing population...")
         population_list = self.init_population(population_size)
+        print(colored("[scheduler]", "blue"), "finished initializing population.")
         makespan_record = []
         Tbest = 999999999999999
 
