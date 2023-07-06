@@ -6,19 +6,19 @@ from GA import GAScheduler
 
 # read input file
 pt_tmp = pd.read_excel("data\JSP_dataset.xlsx",sheet_name="Processing Time",index_col =[0])
-ms_tmp = pd.read_excel("data\JSP_dataset.xlsx",sheet_name="Machines Sequence",index_col =[0])
+jt_tmp = pd.read_excel("data\JSP_dataset.xlsx",sheet_name="Job Type",index_col =[0])
 
-num_job = pt_tmp.shape[0]
-num_mc = pt_tmp.shape[1]
+num_job = pt_tmp.shape[0] # number of jobs
+num_mc = 4 # number of machines
 pt = [list(map(int, pt_tmp.iloc[i])) for i in range(num_job)]
-ms = [list(map(int,ms_tmp.iloc[i])) for i in range(num_job)]
+jt = [list(map(int,jt_tmp.iloc[i])) for i in range(num_job)]
 #print(pt)
 #print(ms)
 
 # every iteration is a simulation for specified parameters
 while True:
 	temp_pt = copy.deepcopy(pt)
-	temp_ms = copy.deepcopy(ms)
+	temp_jt = copy.deepcopy(jt)
 	# current data
 	print("Data :")
 	print('\tthe number of jobs : ', num_job)
@@ -31,7 +31,7 @@ while True:
 		start_time = time.time()
 
 		# GA
-		s = GAScheduler(temp_pt, temp_ms)
+		s = GAScheduler(temp_pt, temp_jt)
 		sequence_best, Tbest = s.run_genetic(population_size=population_size, num_iteration=num_iteration, verbose=True)
 		stop_time = time.time()
 
@@ -46,9 +46,10 @@ while True:
 		else:
 			print("drawing...")
 			s.draw_Gnatt(sequence_best)
+			print("finish drawing.")
 		del s
 	elif choice == "n":
 		break
 	else:
 		print("Please enter again.")
-	del temp_pt, temp_ms
+	del temp_pt, temp_jt
