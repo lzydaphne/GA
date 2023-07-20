@@ -14,7 +14,7 @@ class GAScheduler:
         self.num_mc = 4 # number of machines
         self.num_gene = self.num_job # number of genes in a chromosome
 
-        self.crossover_rate = 0.8
+        self.crossover_rate = 1
         self.mutation_rate = 0.2
 
     # initialize population
@@ -40,13 +40,16 @@ class GAScheduler:
             indices = [A[0].index(element) for element in new_A[0]]
             temp = np.array(new_A[1])
             new_A[1] = temp[indices].tolist()
-            return new_A
-        # sort array A according to B with mutation
-        def relativeSortArrayMutate(A, B, cutpoint):
-            new_A = relativeSortArray(A, B, cutpoint)
-            new_A[0][cutpoint:] = np.roll(new_A[0][cutpoint:], 1)
-            new_A[1][cutpoint:] = np.roll(new_A[1][cutpoint:], 1)
-            new_A[1][-1] = np.random.randint(1, self.num_mc + 1)
+            # mutate (choose a candidate with largest reference point)
+            mutation_prob_1 = np.random.rand()
+            if self.mutation_rate >= mutation_prob_1:
+                new_A[0][cutpoint:] = np.roll(new_A[0][cutpoint:], 1)
+                new_A[1][cutpoint:] = np.roll(new_A[1][cutpoint:], 1)
+            # mutate (random machine selection)
+            mutation_prob_2 = np.random.rand()
+            if self.mutation_rate >= mutation_prob_2:
+                op_to_be_changed = np.random.randint(0, len(new_A[1]))
+                new_A[1][op_to_be_changed] = np.random.randint(1, self.num_mc + 1)
             return new_A
         
         parent_list = copy.deepcopy(population_list)
@@ -64,17 +67,9 @@ class GAScheduler:
                 cutpoint = np.random.randint(0, self.num_gene)
             
                 # child 1
-                mutation_prob_1 = np.random.rand()
-                if self.mutation_rate >= mutation_prob_1:
-                    child_1 = relativeSortArray(child_1, child_2[0], cutpoint)
-                else:
-                    child_1 = relativeSortArrayMutate(child_1, child_2[0], cutpoint) # mutate
+                child_1 = relativeSortArray(child_1, child_2[0], cutpoint)
                 # child 2
-                mutation_prob_2 = np.random.rand()
-                if self.mutation_rate >= mutation_prob_2:
-                    child_2 = relativeSortArray(child_2, child_1[0], cutpoint)
-                else:
-                    child_2 = relativeSortArrayMutate(child_2, child_1[0], cutpoint) # mutate
+                child_2 = relativeSortArray(child_2, child_1[0], cutpoint)
                 
                 offspring_list[S[2*m]] = child_1
                 offspring_list[S[2*m+1]] = child_2
@@ -97,14 +92,14 @@ class GAScheduler:
 
                 if np.size(job_type[machine-1]) == 0:
                     time[machine-1] += setup_time + processing_time
-                    job_type[machine-1].append(machine)
+                    job_type[machine-1].append(type)
                 else :
                     last_type = job_type[machine-1][-1]
                     if type == last_type:
                         time[machine-1] += processing_time
                     else:
                         time[machine-1] += setup_time + processing_time
-                    job_type[machine-1].append(machine)
+                    job_type[machine-1].append(type)
         
             makespan = np.max(time)
             chrom_fitness.append(1/makespan) # reciprocal of makespan
@@ -150,19 +145,21 @@ class GAScheduler:
         for current_generation in range(num_iteration):
             Tbest_now = 99999999999
             # crossover
+            print(colored("[evolving]", "green"), "evolving", current_generation + 1, "generation")
             parent_list, offspring_list = self.crossover(population_size, population_list)
             # fitness calculation
             total_chromosome, chrom_fitness, total_fitness, chrom_fit = self.fitness(population_size, parent_list, offspring_list)
             # selection
             population_list = self.select(population_size, population_list, total_chromosome, chrom_fitness, total_fitness)
-            # comparison (record the best solution)
+            # record the best solution
             for i in range(population_size * 2):
                 if chrom_fit[i] < Tbest_now:
                     Tbest_now = chrom_fit[i]
                     sequence_now = copy.deepcopy(total_chromosome[i])
-            if Tbest_now <= Tbest:
+            if Tbest_now < Tbest:
                 Tbest = Tbest_now
                 sequence_best = copy.deepcopy(sequence_now)
+                print(colored("[better solution]", "cyan"), "better solution found, current best time is", Tbest_now)
             
             makespan_record.append(Tbest)
         
