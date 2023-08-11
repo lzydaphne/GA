@@ -4,6 +4,8 @@ import numpy as np
 from colorama import init
 from termcolor import colored
 
+from TS import TSScheduler
+
 class GAScheduler:
     def __init__(self, pt, jt):
         init()  # init colorama
@@ -66,9 +68,7 @@ class GAScheduler:
                 child_2 = parent_2
                 cutpoint = np.random.randint(0, self.num_gene)
             
-                # child 1
                 child_1 = relativeSortArray(child_1, child_2[0], cutpoint)
-                # child 2
                 child_2 = relativeSortArray(child_2, child_1[0], cutpoint)
                 
                 offspring_list[S[2*m]] = child_1
@@ -82,18 +82,19 @@ class GAScheduler:
         chrom_fitness,chrom_fit = [], []
         total_fitness = 0
         for m in range(population_size * 2):
-            time = [0 for _ in range(self.num_mc)]
-            job_type = [[] for _ in range(self.num_mc)]
+            time = [0 for _ in range(self.num_mc)] # record the total processing time of each machine
+            job_type = [[] for _ in range(self.num_mc)] # record the sequence of job type of each machine
             
             for job, machine in zip(total_chromosome[m][0], total_chromosome[m][1]):
                 processing_time = int(self.pt[job-1][0])
                 type            = int(self.jt[job-1][0])
                 setup_time      = int(self.jt[job-1][1])
 
-                if np.size(job_type[machine-1]) == 0:
+                if np.size(job_type[machine-1]) == 0: # first job on this machine
                     time[machine-1] += setup_time + processing_time
                     job_type[machine-1].append(type)
                 else :
+                    # get the last job type on this machine to determine if setup is needed
                     last_type = job_type[machine-1][-1]
                     if type == last_type:
                         time[machine-1] += processing_time
@@ -114,7 +115,7 @@ class GAScheduler:
         for i in range(population_size * 2):
             pk.append(chrom_fitness[i] / total_fitness)
         for i in range(population_size * 2):
-            cumulative=0
+            cumulative = 0
             for j in range(0,i+1):
                 cumulative = cumulative + pk[j]
             qk.append(cumulative)
@@ -143,10 +144,16 @@ class GAScheduler:
         Tbest = 999999999999999
 
         for current_generation in range(num_iteration):
-            Tbest_now = 99999999999
+            Tbest_now = 999999999999999
             # crossover
             print(colored("[evolving]", "green"), "evolving", current_generation + 1, "generation")
             parent_list, offspring_list = self.crossover(population_size, population_list)
+            # apply tabu search to improve the quality of population
+            for i in range(population_size):
+                t = TSScheduler(offspring_list[i], self.num_mc, self.pt, self.jt)
+                new_t = t.run_TS()
+                offspring_list[i] = copy.deepcopy(new_t)
+                del t
             # fitness calculation
             total_chromosome, chrom_fitness, total_fitness, chrom_fit = self.fitness(population_size, parent_list, offspring_list)
             # selection
@@ -162,6 +169,12 @@ class GAScheduler:
                 print(colored("[better solution]", "cyan"), "better solution found, current best time is", Tbest_now)
             
             makespan_record.append(Tbest)
+
+        import matplotlib.pyplot as plt
+        plt.plot([i for i in range(len(makespan_record))],makespan_record,'b')
+        plt.ylabel('makespan',fontsize=15)
+        plt.xlabel('generation',fontsize=15)
+        plt.savefig('makespan-generation')
         
         return sequence_best, Tbest
     
@@ -172,6 +185,7 @@ class GAScheduler:
 
         time = [0 for _ in range(self.num_mc)]
         job_type = [[] for _ in range(self.num_mc)]
+        # job_record and setup_record are dictionary, with (job, machine) as key and [start_time, end_time] as value
         job_record = {}
         setup_record = {}
         
@@ -211,9 +225,9 @@ class GAScheduler:
         for machine in range(1, self.num_mc + 1):
             for job in range(1, self.num_job + 1):
                 if (job,machine) in setup_record:
-                    df.append(dict(Task='Machine %s'%(machine), Start='2018-07-14 %s'%(str(setup_record[(job,machine)][0])), Finish='2018-07-14 %s'%(str(setup_record[(job,machine)][1])),Resource='Setup'))
+                    df.append(dict(Task='Machine %s'%(machine), Start='2023-07-01 %s'%(str(setup_record[(job,machine)][0])), Finish='2023-07-01 %s'%(str(setup_record[(job,machine)][1])),Resource='Setup'))
                 if (job,machine) in job_record:
-                    df.append(dict(Task='Machine %s'%(machine), Start='2018-07-14 %s'%(str(job_record[(job,machine)][0])), Finish='2018-07-14 %s'%(str(job_record[(job,machine)][1])),Resource='Job %s'%(job)))
+                    df.append(dict(Task='Machine %s'%(machine), Start='2023-07-01 %s'%(str(job_record[(job,machine)][0])), Finish='2023-07-01 %s'%(str(job_record[(job,machine)][1])),Resource='Job %s'%(job)))
           
         # create additional colors since default colors of Plotly are limited to 10 different colors
         r = lambda : np.random.randint(0,255)
