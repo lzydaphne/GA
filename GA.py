@@ -4,6 +4,8 @@ import numpy as np
 from colorama import init
 from termcolor import colored
 
+from TS import TSScheduler
+
 class GAScheduler:
     def __init__(self, pt, jt):
         init()  # init colorama
@@ -146,6 +148,12 @@ class GAScheduler:
             # crossover
             print(colored("[evolving]", "green"), "evolving", current_generation + 1, "generation")
             parent_list, offspring_list = self.crossover(population_size, population_list)
+            # apply tabu search to improve the quality of population
+            for i in range(population_size):
+                t = TSScheduler(offspring_list[i], self.num_mc, self.pt, self.jt)
+                new_t = t.run_TS()
+                offspring_list[i] = copy.deepcopy(new_t)
+                del t
             # fitness calculation
             total_chromosome, chrom_fitness, total_fitness, chrom_fit = self.fitness(population_size, parent_list, offspring_list)
             # selection
