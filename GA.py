@@ -14,8 +14,9 @@ class GAScheduler:
         self.jt = np.array(jt)
 
         self.num_job = self.pt.shape[0]  # number of jobs
+        print(colored("[scheduler]", "blue"), "number of jobs:", self.num_job)
         self.num_mc = 4  # number of machines
-        self.num_gene = self.num_job  # number of genes in a chromosome
+        self.num_gene = self.num_job   # number of genes in a chromosome
 
         self.crossover_rate = 1
         self.mutation_rate = 0.2

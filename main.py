@@ -2,7 +2,7 @@
 import time
 import pandas as pd
 
-from GA_SPT import GAScheduler
+from GA import GAScheduler
 
 # read input file
 pt_tmp = pd.read_excel(
@@ -14,7 +14,7 @@ num_job = pt_tmp.shape[0]  # number of jobs
 num_mc = 4  # number of machines
 pt = [list(map(int, pt_tmp.iloc[i])) for i in range(num_job)]
 jt = [list(map(int, jt_tmp.iloc[i])) for i in range(num_job)]
-# print(pt)
+print(pt)
 # print(ms)
 
 # every iteration is a simulation for specified parameters
