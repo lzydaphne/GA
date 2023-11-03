@@ -5,11 +5,12 @@ import pandas as pd
 from GA import GAScheduler
 
 # read input file
-pt_tmp = pd.read_excel("data\JSP_dataset.xlsx",sheet_name="Processing Time",index_col =[0])
-jt_tmp = pd.read_excel("data\JSP_dataset.xlsx",sheet_name="Job Type",index_col =[0])
+input_file = "data\dataset_2.xlsx"
+pt_tmp = pd.read_excel(input_file, sheet_name="Processing Time", index_col =[0])
+jt_tmp = pd.read_excel(input_file, sheet_name="Job Type", index_col =[0])
 
 num_job = pt_tmp.shape[0] # number of jobs
-num_mc = 4 # number of machines
+num_mc = 8 # number of machines
 pt = [list(map(int, pt_tmp.iloc[i])) for i in range(num_job)]
 jt = [list(map(int,jt_tmp.iloc[i])) for i in range(num_job)]
 #print(pt)
@@ -31,7 +32,7 @@ while True:
 		start_time = time.time()
 
 		# GA
-		s = GAScheduler(temp_pt, temp_jt)
+		s = GAScheduler(temp_pt, temp_jt, num_mc)
 		sequence_best, Tbest = s.run_genetic(population_size=population_size, num_iteration=num_iteration, verbose=True)
 		stop_time = time.time()
 

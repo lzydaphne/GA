@@ -18,7 +18,8 @@ class TSScheduler:
         for i in range(length):
             for j in range(i + 1, length):
                 neighbor = copy.deepcopy(self.current_chromosome)
-                neighbor[1][i], neighbor[1][j] = neighbor[1][j], neighbor[1][i]
+                #neighbor[1][i], neighbor[1][j] = neighbor[1][j], neighbor[1][i]
+                neighbor[0][i], neighbor[0][j] = neighbor[0][j], neighbor[0][i]
                 self.neighborhood.append(neighbor)
 
     def fitness(self):

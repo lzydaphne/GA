@@ -7,13 +7,13 @@ from termcolor import colored
 from TS import TSScheduler
 
 class GAScheduler:
-    def __init__(self, pt, jt):
+    def __init__(self, pt, jt, num_mc):
         init()  # init colorama
         self.pt = np.array(pt)
         self.jt = np.array(jt)
 
         self.num_job = self.pt.shape[0] # number of jobs
-        self.num_mc = 4 # number of machines
+        self.num_mc = num_mc # number of machines
         self.num_gene = self.num_job # number of genes in a chromosome
 
         self.crossover_rate = 1
